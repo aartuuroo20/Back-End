@@ -1,6 +1,0 @@
-#DB CONFIG
-MONGO_USR=arequejop
-MONGO_PWD=arequejop1234
-DB_NAME=carspooling
-MONGO_URI=ac-qlfnwbi-shard-00-02.ldcrudh.mongodb.net
-PORT=27017
