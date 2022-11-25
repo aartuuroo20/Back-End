@@ -28,3 +28,5 @@ const s = new Server({
 s.listenAndServe();
 
 console.log(`Server running on: http://localhost:3000/graphql`);
+
+//deno run --import-map=./import_map.json --allow-all src/main.ts
