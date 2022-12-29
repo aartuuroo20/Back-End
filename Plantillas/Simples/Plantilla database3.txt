@@ -1,6 +1,5 @@
 import { MongoClient, Database } from "mongo";
 import { config } from "https://deno.land/x/dotenv@v3.2.0/mod.ts";
-import { EquipoSchema, PartidoSchema } from "../../../APIGestionMundial/src/db/schema.ts";
 
 
 await config({ export: true, allowEmptyValues: true });
