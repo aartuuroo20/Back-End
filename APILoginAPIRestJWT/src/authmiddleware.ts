@@ -1,7 +1,6 @@
 import { Context } from "https://deno.land/x/oak/mod.ts";
 import { validate } from "https://deno.land/x/djwt/mod.ts";
 
-
 const authMiddleware = async (ctx: Context, next: any) => {
 
   const jwtToken: string = ctx.request.headers.get('Authorization') 

@@ -3,8 +3,12 @@ import { Book, User } from "../types.ts";
 import { BooksCollection, UsersCollection } from "../db/database.ts";
 import * as bcrypt from "bcrypt";
 import { ObjectId } from "mongo";
-import { createJWT, verifyJWT } from "../lib/jwt.ts";
 import { BookSchema, UserSchema } from "../db/schema.ts";
+import { create } from "https://deno.land/x/djwt@v2.8/mod.ts";
+import { Header } from "jwt";
+import { generateKey, verifyJWT } from "../lib/jwt.ts";
+
+
 
 
 type SignInUsersContext = RouterContext<
@@ -24,6 +28,13 @@ type PostBookContext = RouterContext<
 Record<string | number, string | undefined>,
 Record<string, any>
 >;
+
+
+  
+  const header: Header = {
+    alg: "HS256",
+  };
+  
 
 export const SignIn = async (context: SignInUsersContext) => {
     try {
@@ -45,11 +56,14 @@ export const SignIn = async (context: SignInUsersContext) => {
         const hashedPassword = await bcrypt.hash(value.password)
         const _id1 = new ObjectId()
 
-        const token = await createJWT({
+        const key = Deno.env.get("JWT_SECRET")
+        const cryptoKey: CryptoKey = await generateKey(key!)
+
+        const token = await create(header,{
             id: _id1.toString(),
             username: value.username,
             email: value.email,
-        }, Deno.env.get("JWT_SECRET")!)
+        }, cryptoKey!)
 
         const user: Partial<User> = {
             //_id,
@@ -97,11 +111,13 @@ export const LogIn = async (context: LogInUsersContext) => {
             return
         }
 
-        const token = await createJWT({
+        const key = Deno.env.get("JWT_SECRET")
+        const cryptoKey: CryptoKey = await generateKey(key!)
+        const token = await create(header,{
             id: userExist._id.toString(),
             username: value.username,
             email: value.email,
-        }, Deno.env.get("JWT_SECRET")!)
+        }, cryptoKey!)
 
         return context.response.body = {
             token
