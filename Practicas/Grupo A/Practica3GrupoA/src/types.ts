@@ -1,10 +1,12 @@
 
+
 export type Slots = {
+    id: string,
+    id_doctor: string,
     day: number,
     month: number,
     year: number,
     hour: number,
     available: boolean,
-    id_doctor: string,
-    dni: string,
+    dni?: string
 }
