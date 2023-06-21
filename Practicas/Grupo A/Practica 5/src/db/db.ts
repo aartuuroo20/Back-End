@@ -1,7 +1,7 @@
 import { MongoClient, Database } from "mongo";
-import { config } from "https://deno.land/x/dotenv@v3.2.0/mod.ts";
-import { charactersSchema } from "./schema.ts";
 
+import { config } from "std/dotenv/mod.ts";
+import { MatchSchema, PlayerSchema, TeamSchema, UserSchema } from "./schema.ts";
 
 await config({ export: true, allowEmptyValues: true });
 
@@ -11,7 +11,7 @@ const connectMongoDB = async (): Promise<Database> => {
   const db_name = Deno.env.get("DB_NAME");
   const mongo_uri = Deno.env.get("MONGO_URI");
 
-  if (!mongo_usr ||!mongo_pwd || !db_name || !mongo_uri ) {
+  if (!mongo_usr || !mongo_pwd || !db_name || !mongo_uri) {
     throw new Error(
       "Missing environment variables, check env.sample for creating .env file"
     );
@@ -28,5 +28,7 @@ const connectMongoDB = async (): Promise<Database> => {
 const db = await connectMongoDB();
 console.info(`MongoDB ${db.name} connected`);
 
-//Librerias del proyecto
-
+export const MatchCollection = db.collection<MatchSchema>("matches");
+export const TeamCollection = db.collection<TeamSchema>("teams");
+export const PlayerCollection = db.collection<PlayerSchema>("players");
+export const UserCollection = db.collection<UserSchema>("Users");
