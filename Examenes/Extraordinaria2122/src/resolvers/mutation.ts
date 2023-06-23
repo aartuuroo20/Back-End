@@ -1,15 +1,16 @@
 import { ObjectId } from "https://deno.land/x/web_bson@v0.2.5/mod.ts";
 import { autoresCollection, booksCollection, editorialesCollection } from "../db/mongo.ts";
 import { Autores, Books, Editoriales } from "../types.ts";
+import { AutoresSchema, BooksSchema, EditorialesSchema } from "../db/schema.ts";
 
 export const Mutation = {
-    addPressHouse: async (_: unknown, args: { name: string, web: string, country: string }): Promise<Editoriales> => {
+    addPressHouse: async (_: unknown, args: { name: string, web: string, country: string }): Promise<EditorialesSchema> => {
         try {
             if(!args.name || !args.web || !args.country) throw new Error("Missing arguments");
             const comprobarEditorial = await editorialesCollection.findOne({name: args.name});
             if(comprobarEditorial) throw new Error("Editorial already exists");
             
-            const newEditorial: ObjectId = await editorialesCollection.insertOne({
+            const _id: ObjectId = await editorialesCollection.insertOne({
                 name: args.name,
                 web: args.web,
                 country: args.country,
@@ -17,7 +18,7 @@ export const Mutation = {
             });
 
             return {
-                id: newEditorial.toString(),
+                _id,
                 name: args.name,
                 web: args.web,
                 country: args.country,
@@ -29,20 +30,20 @@ export const Mutation = {
         }
     },
 
-    addAuthor: async (_: unknown, args: { name: string, lang: string}): Promise<Autores> => {
+    addAuthor: async (_: unknown, args: { name: string, lang: string}): Promise<AutoresSchema> => {
         try {
             if(!args.name || !args.lang) throw new Error("Missing arguments");
             const comprobarAutor = await autoresCollection.findOne({name: args.name});
             if(comprobarAutor) throw new Error("Author already exists");
             
-            const newAutor: ObjectId = await autoresCollection.insertOne({
+            const _id: ObjectId = await autoresCollection.insertOne({
                 name: args.name,
                 lang: args.lang,
                 books: []
             });
 
             return {
-                id: newAutor.toString(),
+                _id,
                 name: args.name,
                 lang: args.lang,
                 books: []
@@ -53,7 +54,7 @@ export const Mutation = {
         }
     },
 
-    addBook: async (_: unknown, args: { title: string, author: string, editorial: string, year: number}): Promise<Books> => {
+    addBook: async (_: unknown, args: { title: string, author: string, editorial: string, year: number}): Promise<BooksSchema> => {
         try {
             if(!args.title || !args.author || !args.editorial || !args.year) throw new Error("Missing arguments");
             //Comprobar si un autor tiene ese libro
@@ -64,7 +65,7 @@ export const Mutation = {
             const comprobarEditorial = await editorialesCollection.findOne({name: args.editorial});
             if(!comprobarEditorial) throw new Error("Editorial doesn't exists");
             
-            const newLibro: ObjectId = await booksCollection.insertOne({
+            const _id: ObjectId = await booksCollection.insertOne({
                 title: args.title,
                 author: comprobarAutor._id,
                 editorial: comprobarEditorial._id,
@@ -75,7 +76,7 @@ export const Mutation = {
             await editorialesCollection.updateOne({name: args.editorial}, {$push: {books: newLibro}});
 
             return {
-                id: newLibro.toString(),
+                _id,
                 title: args.title,
                 author: comprobarAutor._id,
                 editorial: comprobarEditorial._id,
@@ -87,17 +88,19 @@ export const Mutation = {
         }
     },
 
-    deletePressHouse: async (_: unknown, args: { id: string }): Promise<Editoriales> => {
+    deletePressHouse: async (_: unknown, args: { id: string }): Promise<EditorialesSchema> => {
         try {
             if(!args.id) throw new Error("Missing arguments");
             const comprobarEditorial = await editorialesCollection.findOne({_id: new ObjectId(args.id)});
             if(!comprobarEditorial) throw new Error("Editorial doesn't exists");
 
             const deleteEditorial = await editorialesCollection.deleteOne({_id: new ObjectId(args.id)});
+            const libros = await booksCollection.find({editorial: new ObjectId(args.id)}).toArray();
             const librosBorrados = await booksCollection.deleteMany({editorial: new ObjectId(args.id)});
-            await autoresCollection.updateMany({}, {$pull: {books: {$in: librosBorrados}}});
+            await autoresCollection.updateMany({}, {$pull: {books: {$in: libros.map((libro) => libro._id)}}});
+
             return {
-                id: comprobarEditorial._id.toString(),
+                _id: comprobarEditorial._id,
                 name: comprobarEditorial.name,
                 web: comprobarEditorial.web,
                 country: comprobarEditorial.country,
@@ -110,18 +113,19 @@ export const Mutation = {
         }
     },
 
-    deleteAuthor: async (_: unknown, args: { id: string }): Promise<Autores> => {
+    deleteAuthor: async (_: unknown, args: { id: string }): Promise<AutoresSchema> => {
         try {
             if(!args.id) throw new Error("Missing arguments");
             const comprobarAutor = await autoresCollection.findOne({_id: new ObjectId(args.id)});
             if(!comprobarAutor) throw new Error("Author doesn't exists");
 
             const deleteAutor = await autoresCollection.deleteOne({_id: new ObjectId(args.id)});
+            const editoriales = await editorialesCollection.find({books: new ObjectId(args.id)}).toArray();
             const librosBorrados = await booksCollection.deleteMany({author: new ObjectId(args.id)});
-            await editorialesCollection.updateMany({}, {$pull: {books: {$in: librosBorrados}}});
+            await editorialesCollection.updateMany({}, {$pull: {books: {$in: editoriales.map((libro) => libro._id)}}});
 
             return {
-                id: comprobarAutor._id.toString(),
+                _id: comprobarAutor._id,
                 name: comprobarAutor.name,
                 lang: comprobarAutor.lang,
                 books: comprobarAutor.books
@@ -133,7 +137,7 @@ export const Mutation = {
         }
     },
 
-    deleteBook: async (_: unknown, args: { id: string }): Promise<Books> => {
+    deleteBook: async (_: unknown, args: { id: string }): Promise<BooksSchema> => {
         try {
             if(!args.id) throw new Error("Missing arguments");
             const comprobarLibro = await booksCollection.findOne({_id: new ObjectId(args.id)}); 
@@ -144,10 +148,10 @@ export const Mutation = {
             await editorialesCollection.updateMany({}, {$pull: {books: new ObjectId(args.id)}});
 
             return {
-                id: comprobarLibro._id.toString(),
+                _id: comprobarLibro._id,
                 title: comprobarLibro.title,
-                author: comprobarLibro.author.id.toString(),
-                editorial: comprobarLibro.editorial.id.toString(),
+                author: comprobarLibro.author,
+                editorial: comprobarLibro.editorial,
                 year: comprobarLibro.year,
             }
             
