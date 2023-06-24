@@ -27,5 +27,63 @@ export const Query = {
             throw error;
         }
     }
-    
 }
+
+/*Solucion mediante API Rest
+type GetCharacterContext = RouterContext<
+  "/getCharacter/:id",
+  {
+    id: string;
+  } & Record<string | number, string | undefined>,
+  Record<string, any>
+>;
+
+type GetCharactersContext = RouterContext<
+  "/getCharacters/:id",
+  {
+    id: string;
+  } & Record<string | number, string | undefined>,
+  Record<string, any>
+>;
+
+export const getCharacter = async (context: GetCharacterContext) => {
+    try {
+        if(!context.params.id){
+            context.response.status = 400;
+            return;
+        }
+
+        const response = await fetch(`https://rickandmortyapi.com/api/character/${context.params.id}`);
+        const data = await response.json();
+        context.response.body = data;
+        
+    } catch (error) {
+        console.log(error);
+        context.response.status = 500;
+    }
+}
+
+export const getCharacters = async (context: GetCharactersContext) => {
+    try {
+        if(!context.params.id){
+            context.response.status = 400;
+            return;
+        }
+
+        const ids = context.params.id.split(',');
+        const Characters = await Promise.all(ids.map(async (id) => {
+            const response = await fetch(`https://rickandmortyapi.com/api/character/${id}`);
+            const data = await response.json();
+            return data;
+        }));
+
+        context.response.body = Characters;
+        
+    } catch (error) {
+        console.log(error);
+        context.response.status = 500;
+    }
+}
+
+
+*/
