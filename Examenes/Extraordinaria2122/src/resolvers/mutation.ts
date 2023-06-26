@@ -57,12 +57,12 @@ export const Mutation = {
     addBook: async (_: unknown, args: { title: string, author: string, editorial: string, year: number}): Promise<BooksSchema> => {
         try {
             if(!args.title || !args.author || !args.editorial || !args.year) throw new Error("Missing arguments");
-            //Comprobar si un autor tiene ese libro
-            const comprobarAutor = await autoresCollection.findOne({name: args.author});
+
+            const comprobarAutor = await autoresCollection.findOne({_id: new ObjectId(args.author)});
             if(!comprobarAutor) throw new Error("Author doesn't exists");
-            const comprobarLibroAutor = await booksCollection.findOne({title: args.title, author: args.author});
+            const comprobarLibroAutor = await booksCollection.findOne({title: args.title, author: new ObjectId(args.author)});
             if(comprobarLibroAutor) throw new Error("Author already has this book");
-            const comprobarEditorial = await editorialesCollection.findOne({name: args.editorial});
+            const comprobarEditorial = await editorialesCollection.findOne({_id: new ObjectId(args.editorial)});
             if(!comprobarEditorial) throw new Error("Editorial doesn't exists");
             
             const _id: ObjectId = await booksCollection.insertOne({
@@ -72,8 +72,8 @@ export const Mutation = {
                 year: args.year
             });
 
-            await autoresCollection.updateOne({name: args.author}, {$push: {books: newLibro}});
-            await editorialesCollection.updateOne({name: args.editorial}, {$push: {books: newLibro}});
+            await autoresCollection.updateOne({_id: new ObjectId(args.author)}, {$push: {books: _id}});
+            await editorialesCollection.updateOne({_id: new ObjectId(args.editorial)}, {$push: {books: _id}});
 
             return {
                 _id,
