@@ -42,6 +42,11 @@ export const postEvento = async (context: PostEventosContext) => {
                     context.response.body = "Ya hay un evento en esa hora";
                     return;
                 }
+                if(comprobarEvento[i].horaInicio <= value.horaFinal && comprobarEvento[i].horaFinal >= value.horaFinal){
+                    context.response.status = 400;
+                    context.response.body = "Ya hay un evento en esa hora";
+                    return;
+                }
             }
         }
             
